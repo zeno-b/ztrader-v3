@@ -19,6 +19,7 @@ AgentStatus: TypeAlias = Literal["success", "abstain", "error"]
 SignalDirection: TypeAlias = Literal["buy", "sell", "hold", "abstain"]
 Timeframe: TypeAlias = Literal["1m", "5m", "15m", "1h", "4h", "1d"]
 AssetClass: TypeAlias = Literal["equity", "crypto", "etf", "fx", "other"]
+ContextValue: TypeAlias = str | float | int | bool
 
 
 class BaseSignal(BaseModel):
@@ -150,6 +151,8 @@ class TrainingPairMetadata(BaseModel):
     is_replay: bool = False
     dataset_version: str
     unmatched_negative: bool = False
+    input_sources: list[str] = Field(default_factory=list)
+    context_features: dict[str, ContextValue] = Field(default_factory=dict)
 
 
 class TrainingPair(BaseModel):

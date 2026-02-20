@@ -8,6 +8,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from models.schemas import BaseSignal, DecisionLogRecord, MarketRegime
+from training.context_sources import MacroSnapshotContextSource
 from training.dataset_builder import DatasetBuilder, DatasetBuilderConfig
 
 REGIMES: tuple[MarketRegime, ...] = (
@@ -96,3 +97,24 @@ def test_dataset_builder_enforces_replay_and_regime_floor(tmp_path: Path) -> Non
         regime_counts[str(regime)] += 1
     for regime in REGIMES:
         assert regime_counts[regime] / len(rows) >= 0.20
+
+
+def test_dataset_builder_adds_context_source_features(tmp_path: Path) -> None:
+    output_dir = tmp_path / "datasets"
+    records = _build_records(60)
+    snapshot_key = records[0].timestamp.date().isoformat()
+    builder = DatasetBuilder(
+        output_dir=output_dir,
+        config=DatasetBuilderConfig(min_outcome_records=20, seed=4),
+        context_sources=[MacroSnapshotContextSource(snapshots={snapshot_key: {"vix": 21.5}})],
+    )
+
+    built = builder.build(records, "v4")
+    rows = _read_jsonl(built.train_path)
+    assert rows
+    first = rows[0]
+    assert "Additional input sources:" in first["prompt"]
+    metadata = first["metadata"]
+    assert "macro_snapshot" in metadata["input_sources"]
+    context_features = metadata["context_features"]
+    assert "macro_snapshot.available" in context_features

@@ -21,6 +21,23 @@ between trading and training pipelines.
 Both modes run concurrently but are isolated by queue boundaries and separate
 containers.
 
+## Data sources (trading + training)
+
+Trading market inputs are acquired from multiple providers with fallback and
+consensus checks:
+
+- Alpaca bars (equities/ETFs)
+- Yahoo Finance chart API (equities/ETFs/crypto/FX fallback)
+- CCXT Binance public OHLCV (crypto)
+- CCXT Kraken public OHLCV (crypto)
+
+Training datasets are enriched with additional context sources per record:
+
+- Source diversity context (which data sources informed the decision)
+- Outcome quality context (latency bucket and outcome label)
+- Temporal/regime context (weekday/hour/regime)
+- Optional macro snapshot context (for exogenous features such as rates/CPI)
+
 ## Exchange execution support
 
 - Paper mode is the default (`LIVE_TRADING=false`).

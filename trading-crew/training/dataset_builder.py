@@ -13,6 +13,14 @@ from uuid import UUID
 from loguru import logger
 
 from models.schemas import DecisionLogRecord, MarketRegime, TrainingPair, TrainingPairMetadata
+from training.context_sources import (
+    DataSourceDiversityContextSource,
+    OutcomeQualityContextSource,
+    TemporalRegimeContextSource,
+    TrainingContextSource,
+    flatten_contexts,
+    render_context_lines,
+)
 
 REGIMES: tuple[MarketRegime, ...] = (
     "trending_bull",
@@ -56,10 +64,20 @@ class BuiltDataset:
 class DatasetBuilder:
     """Converts decision logs into JSONL train/validation/test artifacts."""
 
-    def __init__(self, output_dir: Path, config: DatasetBuilderConfig | None = None) -> None:
+    def __init__(
+        self,
+        output_dir: Path,
+        config: DatasetBuilderConfig | None = None,
+        context_sources: list[TrainingContextSource] | None = None,
+    ) -> None:
         self._output_dir = output_dir
         self._config = config or DatasetBuilderConfig()
         self._rng = Random(self._config.seed)
+        self._context_sources = context_sources or [
+            DataSourceDiversityContextSource(),
+            OutcomeQualityContextSource(),
+            TemporalRegimeContextSource(),
+        ]
 
     def build(self, records: list[DecisionLogRecord], dataset_version: str) -> BuiltDataset:
         """
@@ -317,6 +335,24 @@ class DatasetBuilder:
         is_replay: bool,
         unmatched_negative: bool,
     ) -> TrainingPair:
+        context_source_names: list[str] = []
+        context_features: dict[str, str | float | int | bool] = {}
+        context_lines: list[str] = []
+        if self._context_sources:
+            contexts = []
+            for source in self._context_sources:
+                try:
+                    contexts.append(source.build_context(record))
+                except Exception as exc:
+                    logger.warning(
+                        "dataset_context_source_failed",
+                        source=source.source_name,
+                        error=str(exc),
+                    )
+            context_source_names = [context.source_name for context in contexts]
+            context_features = flatten_contexts(contexts)
+            context_lines = render_context_lines(contexts)
+
         prompt = (
             "Agent context:\n"
             f"- timestamp: {record.timestamp.isoformat()}\n"
@@ -329,8 +365,12 @@ class DatasetBuilder:
             f"- confidence: {record.confidence:.4f}\n"
             f"- signal: {record.signal_value.model_dump_json()}\n"
             f"- reasoning: {record.reasoning}\n"
-            "Return a valid AgentResponse JSON."
         )
+        if context_lines:
+            prompt += "Additional input sources:\n"
+            prompt += "\n".join(context_lines)
+            prompt += "\n"
+        prompt += "Return a valid AgentResponse JSON."
         completion = json.dumps(
             {
                 "agent_id": record.agent_id,
@@ -359,6 +399,8 @@ class DatasetBuilder:
                 is_replay=is_replay,
                 dataset_version=dataset_version,
                 unmatched_negative=unmatched_negative,
+                input_sources=sorted(set(record.data_sources + context_source_names)),
+                context_features=context_features,
             ),
         )
 

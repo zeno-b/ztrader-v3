@@ -39,9 +39,29 @@ class Settings(BaseSettings):
 
     redis_url: str = Field(default="redis://redis:6379/0", alias="REDIS_URL")
 
+    alpaca_api_key: str = Field(default="", alias="ALPACA_API_KEY")
+    alpaca_secret_key: str = Field(default="", alias="ALPACA_SECRET_KEY")
+    alpaca_base_url: str = Field(
+        default="https://data.alpaca.markets",
+        alias="ALPACA_BASE_URL",
+    )
+
+    market_data_min_sources: int = Field(default=2, alias="MARKET_DATA_MIN_SOURCES")
+    market_data_timeout_seconds: int = Field(default=20, alias="MARKET_DATA_TIMEOUT_SECONDS")
+    market_data_circuit_cooldown_seconds: int = Field(
+        default=120,
+        alias="MARKET_DATA_CIRCUIT_COOLDOWN_SECONDS",
+    )
+
     kraken_api_key: str = Field(default="", alias="KRAKEN_API_KEY")
     kraken_api_secret: str = Field(default="", alias="KRAKEN_API_SECRET")
     kraken_sandbox: bool = Field(default=True, alias="KRAKEN_SANDBOX")
+
+    fred_api_key: str = Field(default="", alias="FRED_API_KEY")
+    training_macro_series: str = Field(
+        default="DFF,CPIAUCSL,UNRATE",
+        alias="TRAINING_MACRO_SERIES",
+    )
 
     mlflow_tracking_uri: str = Field(
         default="http://mlflow:5000", alias="MLFLOW_TRACKING_URI"
