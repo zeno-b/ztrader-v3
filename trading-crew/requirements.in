@@ -1,0 +1,9 @@
+loguru
+mypy
+numpy
+pandas
+pandas-stubs
+pydantic
+pydantic-settings
+pytest
+ruff

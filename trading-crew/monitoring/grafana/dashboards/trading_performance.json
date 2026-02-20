@@ -1,0 +1,13 @@
+{
+  "title": "Trading Performance",
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  }
+}
