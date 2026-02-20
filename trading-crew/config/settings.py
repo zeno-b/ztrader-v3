@@ -7,6 +7,8 @@ from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from tools.order_manager import ExchangeName
+
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
@@ -19,6 +21,7 @@ class Settings(BaseSettings):
 
     log_level: str = Field(default="INFO")
     live_trading: bool = Field(default=False, alias="LIVE_TRADING")
+    trading_exchange: ExchangeName = Field(default="alpaca", alias="TRADING_EXCHANGE")
 
     max_position_pct: float = Field(default=0.02, alias="MAX_POSITION_PCT")
     max_daily_drawdown_pct: float = Field(
@@ -35,6 +38,11 @@ class Settings(BaseSettings):
     postgres_db: str = Field(default="trading", alias="POSTGRES_DB")
 
     redis_url: str = Field(default="redis://redis:6379/0", alias="REDIS_URL")
+
+    kraken_api_key: str = Field(default="", alias="KRAKEN_API_KEY")
+    kraken_api_secret: str = Field(default="", alias="KRAKEN_API_SECRET")
+    kraken_sandbox: bool = Field(default=True, alias="KRAKEN_SANDBOX")
+
     mlflow_tracking_uri: str = Field(
         default="http://mlflow:5000", alias="MLFLOW_TRACKING_URI"
     )
