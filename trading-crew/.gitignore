@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.pyc
+
+# Environment
+.env
+.venv/
+venv/
+
+# Data and artifacts
+artifacts/
+datasets/
+mlruns/
+models/adapters/
+models/weights/
+*.pt
+*.bin
+*.safetensors
+*.jsonl
+
+# Service data
+minio_data/
+timescale_data/
+ollama_data/
